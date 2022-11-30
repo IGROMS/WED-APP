@@ -1,6 +1,8 @@
 import { getSuggestedQuery } from "@testing-library/react";
-import { createContext, useContext, useState } from "react";
-import { setToken } from "../store/AccesTokenStore";
+import { createContext, useContext, useEffect, useState } from "react";
+import { verifyJWT } from "../helpers/jwtHelper";
+import { getCurrentUser } from "../services/UserServices";
+import { getAccessToken, logout, setToken } from "../store/AccesTokenStore";
 
 const AuthContext = createContext()
 
@@ -15,6 +17,33 @@ export const AuthContextProvider = ({ children }) => {
     }
 
     const getUser = (cb) => {
-        getCurrentUser
+        getCurrentUser()
+            .then(user => {
+                setUser(user)
+            })
     }
+
+    useEffect(() => {
+        if(getAccessToken()) {
+            if(!verifyJWT(getAccessToken())) {
+                logout()
+            } else {
+                getUser()
+            }
+        }
+    }, [])
+
+    const value = {
+        user,
+        login,
+        getUser
+    }
+
+    return (
+        <AuthContext.Provider value={value}>
+            {children}
+        </AuthContext.Provider>
+    )
 }
+
+export default AuthContext
